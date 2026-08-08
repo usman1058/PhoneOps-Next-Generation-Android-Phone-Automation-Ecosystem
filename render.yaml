@@ -1,0 +1,23 @@
+services:
+  # Relay service — the long-running Socket.IO/WebSocket hub that connects
+  # the web panel (Vercel) to Android phones. Must be always-on; cannot run on
+  # Vercel (serverless).
+  - type: web
+    name: phoneops-relay
+    runtime: node
+    rootDir: .
+    plan: free
+    buildCommand: npm ci --include=dev && npm run db:generate
+    startCommand: npm run start --workspace relay-service
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: RELAY_INTERNAL_SECRET
+        sync: false
+      - key: FCM_SERVICE_ACCOUNT_JSON
+        sync: false

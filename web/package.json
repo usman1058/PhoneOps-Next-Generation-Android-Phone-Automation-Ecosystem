@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && node scripts/copy-standalone-assets.mjs",
+    "build": "node scripts/migrate-deploy.mjs && next build && node scripts/copy-standalone-assets.mjs",
     "start": "node .next/standalone/web/server.js",
     "lint": "next lint"
   },

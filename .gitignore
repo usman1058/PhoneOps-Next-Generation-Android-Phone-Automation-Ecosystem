@@ -53,4 +53,4 @@ android/local.properties
 *.jks
 
 # Captures
-captures/
+captures/standalone-*.err

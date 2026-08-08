@@ -208,6 +208,7 @@ export default function TaskBuilderForm({
   const [apps, setApps] = useState<AppInfo[]>([]);
   const [appsLoading, setAppsLoading] = useState(false);
   const [appsError, setAppsError] = useState<string | null>(null);
+  const [appSearch, setAppSearch] = useState("");
 
   const selectedDevice = useMemo(
     () => devices.find((d) => d.id === deviceId) ?? null,
@@ -598,21 +599,40 @@ export default function TaskBuilderForm({
               {appsLoading ? (
                 <input value="Loading installed apps..." disabled />
               ) : (
-                <select
-                  value={draft.package ?? ""}
-                  onChange={(e) => updateDraftField("package", e.target.value)}
-                >
-                  <option value="">
-                    {apps.length === 0
-                      ? "No apps found — is the device online?"
-                      : "Select an installed app"}
-                  </option>
-                  {apps.map((app) => (
-                    <option key={app.package} value={app.package}>
-                      {app.label} ({app.package})
+                <>
+                  <input
+                    type="text"
+                    value={appSearch}
+                    onChange={(e) => setAppSearch(e.target.value)}
+                    placeholder="Search apps by name or package (e.g. WhatsApp, com.whatsapp)"
+                    disabled={apps.length === 0}
+                    style={{ marginBottom: 8 }}
+                  />
+                  <select
+                    value={draft.package ?? ""}
+                    onChange={(e) => updateDraftField("package", e.target.value)}
+                  >
+                    <option value="">
+                      {apps.length === 0
+                        ? "No apps found — is the device online?"
+                        : "Select an installed app"}
                     </option>
-                  ))}
-                </select>
+                    {apps
+                      .filter((app) => {
+                        const q = appSearch.trim().toLowerCase();
+                        if (!q) return true;
+                        return (
+                          app.label.toLowerCase().includes(q) ||
+                          app.package.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((app) => (
+                        <option key={app.package} value={app.package}>
+                          {app.label} ({app.package})
+                        </option>
+                      ))}
+                  </select>
+                </>
               )}
               {appsError && (
                 <p className="muted" style={{ color: "var(--warn)", marginTop: 6, marginBottom: 0 }}>

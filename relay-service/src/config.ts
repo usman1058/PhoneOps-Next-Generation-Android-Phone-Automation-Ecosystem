@@ -17,4 +17,8 @@ export const config = {
     process.env.RELAY_INTERNAL_SECRET,
   ),
   fcmServiceAccountJson: process.env.FCM_SERVICE_ACCOUNT_JSON,
+  // Public reachable base URL (e.g. https://phoneops-relay.onrender.com).
+  // Advertised to the web panel so pairing QRs work over the internet;
+  // falls back to LAN addresses when unset.
+  publicRelayUrl: (process.env.PUBLIC_RELAY_URL ?? "").replace(/\/+$/, ""),
 };

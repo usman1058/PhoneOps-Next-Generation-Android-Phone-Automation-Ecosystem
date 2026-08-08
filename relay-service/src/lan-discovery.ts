@@ -81,5 +81,7 @@ export function startLanDiscovery(): dgram.Socket {
 }
 
 export function lanUrls(): string[] {
-  return lanIps().map((ip) => `http://${ip}:${config.port}`);
+  const urls = lanIps().map((ip) => `http://${ip}:${config.port}`);
+  // A configured public URL always comes first so the panel (and QR) use it.
+  return config.publicRelayUrl ? [config.publicRelayUrl, ...urls] : urls;
 }

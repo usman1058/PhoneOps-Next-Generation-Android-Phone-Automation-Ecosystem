@@ -34,6 +34,11 @@ function saveRelayUrl(value: string): void {
 }
 
 function bestRelayUrl(urls: string[]): string {
+  if (!urls.length) return "";
+  // A configured public https// URL is always what phones can reach from
+  // anywhere (mobile data, deployed servers). Prefer it over LAN IPs.
+  const publicUrl = urls.find((u) => u.startsWith("https://"));
+  if (publicUrl) return publicUrl;
   const scored = urls
     .map((u) => {
       const host = u.replace(/^https?:\/\//, "").split(":")[0];
@@ -44,7 +49,7 @@ function bestRelayUrl(urls: string[]): string {
       return { u, score };
     })
     .sort((a, b) => b.score - a.score);
-  return scored[0]?.u ?? urls[0] ?? "";
+  return scored[0]?.u ?? urls[0];
 }
 
 export default function DevicesPage() {

@@ -19,5 +19,7 @@ services:
         sync: false
       - key: RELAY_INTERNAL_SECRET
         sync: false
+      - key: PUBLIC_RELAY_URL
+        sync: false
       - key: FCM_SERVICE_ACCOUNT_JSON
         sync: false

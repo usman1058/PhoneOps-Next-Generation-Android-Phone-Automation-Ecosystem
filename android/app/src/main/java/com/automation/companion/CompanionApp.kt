@@ -20,6 +20,9 @@ class CompanionApp : Application() {
     @Volatile
     var runTaskHandler: ((runId: String, stepsJson: String) -> Unit)? = null
 
+    @Volatile
+    var onTaskRejected: ((runId: String, reason: String) -> Unit)? = null
+
     override fun onCreate() {
         super.onCreate()
         initFirebaseIfConfigured()

@@ -153,6 +153,13 @@ graph TD
    ```
    Install the APK, grant Accessibility + Internet permissions, then open the web panel → **Devices** → register a device → scan the pairing QR from the app.
 
+> **Power users (optional, bypasses the on-screen toggles):** if the phone is connected via ADB, you can grant the accessibility permission in one command instead of walking through Settings. This also bypasses the MIUI/EMUI "restricted settings" wall on sideloaded APKs:
+> ```bash
+> adb shell settings put secure enabled_accessibility_services \
+>   com.automation.companion/.exec.AutomationAccessibilityService
+> adb shell settings put secure accessibility_enabled 1
+> ```
+> Re-run the app's "Run guided setup" afterwards — it will mark every step green automatically.
 
 ---
 

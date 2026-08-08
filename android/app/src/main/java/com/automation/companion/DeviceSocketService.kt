@@ -1,4 +1,4 @@
-﻿package com.automation.companion
+package com.automation.companion
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -42,6 +42,19 @@ class DeviceSocketService : Service() {
             return START_NOT_STICKY
         }
 
+        app.onTaskRejected = { _, _ ->
+            val handler = android.os.Handler(android.os.Looper.getMainLooper())
+            handler.post {
+                try {
+                    val intent = Intent(this, SetupActivity::class.java)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    // Setup could not be opened (e.g. activity context gone); ignore.
+                }
+            }
+        }
+
         collector = app.appScope.launch {
             app.relayClient.events.collect { event ->
                 val text = when (event) {
@@ -68,6 +81,7 @@ class DeviceSocketService : Service() {
     override fun onDestroy() {
         collector?.cancel()
         collector = null
+        app.onTaskRejected = null
         app.relayClient.stop()
         super.onDestroy()
     }

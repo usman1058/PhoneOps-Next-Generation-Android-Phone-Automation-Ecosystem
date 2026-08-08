@@ -199,11 +199,22 @@ private val scope = app.appScope
         try {
             val msg = JSONObject(text)
             when (msg.getString("type")) {
-                "run_task" -> {
+"run_task" -> {
                     val runId = msg.getString("runId")
                     val steps = msg.getJSONArray("steps").toString()
                     _events.tryEmit(RelayEvent.RunTask(runId, steps))
-                    app.runTaskHandler?.invoke(runId, steps)
+                    if (app.runTaskHandler == null) {
+                        Log.w(TAG, "run_task received but no accessibility handler (service not enabled)")
+                        val fail = JSONObject()
+                            .put("type", "run_complete")
+                            .put("runId", runId)
+                            .put("status", "failed")
+                            .put("error", "Accessibility service is not enabled on the phone")
+                        send(fail.toString())
+                        app.onTaskRejected?.invoke(runId, "Accessibility service is not enabled")
+                    } else {
+                        app.runTaskHandler?.invoke(runId, steps)
+                    }
                 }
                 "start_recording" -> {
                     val sessionId = msg.getString("sessionId")

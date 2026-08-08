@@ -21,7 +21,6 @@ import com.automation.companion.device.RelayEvent
 import com.automation.companion.databinding.ActivityMainBinding
 import com.automation.companion.exec.AutomationAccessibilityService
 import com.automation.companion.exec.RecordingSessionManager
-import com.google.zxing.integration.android.IntentIntegrator
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -64,6 +63,9 @@ override fun onCreate(savedInstanceState: Bundle?) {
         binding.findLanButton.setOnClickListener { findRelayOnLan() }
         binding.enableAccessibilityButton.setOnClickListener { openAccessibilitySettings() }
         binding.recordButton.setOnClickListener { toggleRecording() }
+        binding.setupButton.setOnClickListener {
+            startActivity(Intent(this, SetupActivity::class.java))
+        }
 
         updateAccessibilityButton()
         updateRecordingButton()
@@ -187,19 +189,14 @@ private fun isAccessibilityServiceEnabled(): Boolean {
     }
 
     private fun launchScanner() {
-        IntentIntegrator(this)
-            .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
-            .setPrompt("Scan the pairing QR code from the panel")
-            .setBarcodeImageEnabled(false)
-            .setBeepEnabled(true)
-            .initiateScan()
+        val intent = Intent(this, QrScanActivity::class.java)
+        startActivityForResult(intent, QR_SCAN_REQUEST)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
-        if (result != null) {
-            val contents = result.contents
-            if (contents != null) {
+        if (requestCode == QR_SCAN_REQUEST && resultCode == RESULT_OK) {
+            val contents = data?.getStringExtra(QrScanActivity.EXTRA_RESULT)
+            if (!contents.isNullOrBlank()) {
                 applyPairingPayload(contents)
             } else {
                 Toast.makeText(this, "Scan cancelled", Toast.LENGTH_SHORT).show()
@@ -368,8 +365,12 @@ private fun onRelayEvent(event: RelayEvent) {
         }
     }
 
-    private fun appendLog(line: String) {
+private fun appendLog(line: String) {
         val current = binding.logText.text
         binding.logText.text = if (current.isBlank()) line else "$current\n$line"
+    }
+
+    private companion object {
+        const val QR_SCAN_REQUEST = 101
     }
 }

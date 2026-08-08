@@ -5,7 +5,12 @@ import { APK_CANDIDATES } from "./paths";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+// Public files are served statically by the host (Vercel CDN, standalone
+// copy-standalone-assets). If the file cannot be read from the runtime
+// filesystem, redirect to the static URL so the download always works.
+const STATIC_PATH = "/apk/mobile-task-automation.apk";
+
+export async function GET(_req: Request) {
   let apkPath: string | null = null;
   let newest: { path: string; mtimeMs: number } | null = null;
   for (const candidate of APK_CANDIDATES) {
@@ -21,13 +26,7 @@ export async function GET() {
   if (newest) apkPath = newest.path;
 
   if (!apkPath) {
-    return NextResponse.json(
-      {
-        error:
-          "Android build artifact not found yet. Build the APK before downloading.",
-      },
-      { status: 404 },
-    );
+    return NextResponse.redirect(new URL(STATIC_PATH, new URL(_req.url)));
   }
 
   try {
@@ -40,9 +39,7 @@ export async function GET() {
       },
     });
   } catch {
-    return NextResponse.json(
-      { error: "Failed to read the APK artifact." },
-      { status: 500 },
-    );
+    // Runtime FS read failed (serverless) — serve via the static URL instead.
+    return NextResponse.redirect(new URL(STATIC_PATH, new URL(_req.url)));
   }
 }

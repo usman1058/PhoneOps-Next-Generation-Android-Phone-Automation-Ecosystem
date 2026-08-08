@@ -12,6 +12,7 @@
     "dev:web": "npm run dev --workspace web",
     "dev:relay": "npm run dev --workspace relay-service",
     "build:web": "npm run build --workspace web",
+    "apk:sync": "node web/scripts/sync-apk.mjs",
     "db:generate": "npm run db:generate --workspace shared",
     "db:migrate": "npm run db:migrate --workspace shared",
     "db:studio": "npm run db:studio --workspace shared",

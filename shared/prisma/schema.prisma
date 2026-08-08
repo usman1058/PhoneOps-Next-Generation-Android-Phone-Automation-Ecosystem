@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  devices      Device[]
+  tasks        Task[]
+}
+
+model Device {
+  id         String     @id @default(uuid())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id])
+  name       String
+  apiKeyHash String     @unique
+  fcmToken   String?
+  lastSeenAt DateTime?
+  isOnline   Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  taskRuns   TaskRun[]
+}
+
+model Task {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  deviceId  String
+  name      String
+  steps     Json
+  schedule  String?
+  isEnabled Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  taskRuns  TaskRun[]
+}
+
+model TaskRun {
+  id          String   @id @default(uuid())
+  taskId      String
+  task        Task     @relation(fields: [taskId], references: [id])
+  deviceId    String
+  device      Device   @relation(fields: [deviceId], references: [id])
+  triggeredBy String
+  status      String
+  stepResults Json
+  startedAt   DateTime @default(now())
+  finishedAt  DateTime?
+}

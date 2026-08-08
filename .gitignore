@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+out/
+dist/
+dist-bundle/
+build/
+.webpack/
+**/build/
+desktop/release/
+desktop/dist/
+
+# Local helper scripts
+web/run-build.cmd
+web/web-build*.log
+
+# Captures & scratch
+captures/
+automation_phone.png
+automation_ui.xml
+
+# Environment & secrets — never commit real values
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs & runtime
+*.log
+npm-debug.log*
+
+# Prisma generated client (regenerate on build)
+shared/generated/prisma/
+
+# Tool caches / machine state
+.codex-home/
+.npm-cache/
+.cache/
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.kotlin/
+
+# Local Android properties & keystores
+android/local.properties
+*.keystore
+*.jks
+
+# Captures
+captures/

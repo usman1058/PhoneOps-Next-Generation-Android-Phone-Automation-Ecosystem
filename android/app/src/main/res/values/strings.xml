@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Automation Companion</string>
+    <string name="accessibility_service_description">Executes automation task steps (open apps, tap by text or coordinates, swipe) when triggered from the automation panel.</string>
+    <string name="setup_hint">Wireless first: use a reachable relay URL over Wi-Fi or mobile data. USB reverse is only for local debugging.</string>
+</resources>

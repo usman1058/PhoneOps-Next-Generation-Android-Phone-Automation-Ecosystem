@@ -1,0 +1,21 @@
+{
+  "name": "phoneops",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "web",
+    "relay-service",
+    "shared"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace web",
+    "dev:relay": "npm run dev --workspace relay-service",
+    "build:web": "npm run build --workspace web",
+    "db:generate": "npm run db:generate --workspace shared",
+    "db:migrate": "npm run db:migrate --workspace shared",
+    "db:studio": "npm run db:studio --workspace shared",
+    "compose:db": "docker compose up -d postgres",
+    "dev:web": "npm run dev --workspace web",
+    "dev:relay": "npm run dev --workspace relay-service"
+  }
+}

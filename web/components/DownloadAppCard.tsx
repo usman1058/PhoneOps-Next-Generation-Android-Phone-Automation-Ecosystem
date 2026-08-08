@@ -104,8 +104,8 @@ export default function DownloadAppCard() {
 
           {info && (
             <div className="muted" style={{ marginTop: 4 }}>
-              Latest build: {formatBytes(info.sizeBytes)} ({info.kind}
-              {info.builtAt ? `, built ${new Date(info.builtAt).toLocaleString()}` : ""})
+              Latest build: {info.sizeBytes ? formatBytes(info.sizeBytes) : "Available now"}
+              {info.builtAt ? ` (${info.kind}, built ${new Date(info.builtAt).toLocaleString()})` : ""}
             </div>
           )}
           {error && (

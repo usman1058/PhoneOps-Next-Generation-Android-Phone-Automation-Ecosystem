@@ -24,10 +24,16 @@ export async function GET() {
   }
 
   if (!found) {
-    return NextResponse.json(
-      { error: "Android build artifact not found yet." },
-      { status: 404 },
-    );
+    // The APK is committed to web/public/apk/ and served statically (Vercel
+    // CDN / standalone). On serverless runtimes public assets may not be
+    // readable via fs, so report the bundled copy as available.
+    return NextResponse.json({
+      available: true,
+      kind: "bundled",
+      fileName: "mobile-task-automation.apk",
+      sizeBytes: null,
+      builtAt: null,
+    });
   }
 
   return NextResponse.json({

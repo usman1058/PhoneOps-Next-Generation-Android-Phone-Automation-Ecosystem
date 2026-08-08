@@ -14,6 +14,7 @@ desktop/dist/
 
 # Local helper scripts
 web/run-build.cmd
+web/run-build7.cmd
 web/web-build*.log
 
 # Captures & scratch

@@ -7,6 +7,7 @@ const monorepoRoot = path.resolve(__dirname, "..");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+  transpilePackages: ["@automation/shared"],
   experimental: {
     parallelServerCompiles: false,
     outputFileTracingRoot: monorepoRoot,

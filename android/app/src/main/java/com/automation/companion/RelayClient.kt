@@ -244,6 +244,23 @@ private val scope = app.appScope
                         send(payload.toString())
                     }
                 }
+                "screen_start" -> {
+                    app.onScreenStart(
+                        MirrorParams(
+                            sessionId = msg.getString("sessionId"),
+                            fps = msg.optInt("fps", 4),
+                            maxW = msg.optInt("maxW", 540),
+                            quality = msg.optInt("quality", 45),
+                        ),
+                    )
+                }
+                "screen_stop" -> {
+                    app.onScreenStop()
+                }
+                "remote_input" -> {
+                    val input = msg.optJSONObject("input") ?: return
+                    app.remoteInputHandler?.invoke(input)
+                }
             }
         } catch (e: Exception) {
             Log.w(TAG, "unparsed message: $text", e)

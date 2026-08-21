@@ -6,7 +6,9 @@ import { verifyDeviceWsToken } from "../auth";
 import { broadcastPanel } from "./panelServer";
 import {
   addOnline,
+  endScreenSession,
   isDeviceOnline,
+  isScreenSession,
   removeOnline,
 } from "./state";
 import { flushPendingRuns, handleRunComplete, handleStepResult } from "../run";
@@ -91,6 +93,22 @@ export function attachDeviceServer(server: Server): void {
         storeLatestRecording(deviceId, m.steps);
       } else if (m.type === "app_list") {
         resolveAppList(m.requestId, m.apps);
+      } else if (m.type === "screen_frame" && deviceId) {
+        // Drop frames for stale/unknown sessions so a rogue device can't
+        // stream to the panel uninvited.
+        if (isScreenSession(deviceId, m.sessionId)) {
+          broadcastPanel(
+            {
+              type: "screen_frame",
+              deviceId,
+              sessionId: m.sessionId,
+              w: m.w,
+              h: m.h,
+              data: m.data,
+            },
+            deviceId,
+          );
+        }
       } else if (m.type === "fcm_token" && deviceId) {
         await prisma.device.update({
           where: { id: deviceId },
@@ -102,6 +120,15 @@ export function attachDeviceServer(server: Server): void {
     ws.on("close", async () => {
       clearTimeout(authTimer);
       if (authed && deviceId) {
+        const endedSession = endScreenSession(deviceId);
+        if (endedSession) {
+          broadcastPanel({
+            type: "screen_state",
+            deviceId,
+            active: false,
+            error: "Device disconnected",
+          });
+        }
         removeOnline(deviceId, ws);
         if (!isDeviceOnline(deviceId)) {
           await prisma.device

@@ -112,12 +112,44 @@ class SetupActivity : AppCompatActivity() {
         list.add(
             SetupStep(
                 title = "Enable Automation (accessibility)",
-                hint = "This is the permission that lets tasks open apps, tap, and swipe for you. If a \u201CRestricted settings\u201D popup appears, tap OK first, then allow it for this app, then come back here.",
+                hint = "This is the permission that lets tasks open apps, tap, and swipe for you. If a \u201CRestricted settings\u201D popup appears, tap OK first, allow it for this app, then come back here.",
                 isDone = { isAccessibilityEnabled() },
                 open = { openAccessibilitySettings() },
             ),
         )
+        // Xiaomi/Redmi/POCO devices block sideloaded apps from enabling
+        // accessibility until "Allow restricted settings" is flipped on the
+        // app's system info page. Detect that case and guide through it first.
+        val manufacturer = Build.MANUFACTURER?.lowercase() ?: ""
+        val miuiFamily = manufacturer == "xiaomi" || manufacturer == "redmi" || manufacturer == "poco"
+        if (miuiFamily) {
+            list.add(
+                1,
+                SetupStep(
+                    title = "Allow restricted settings (Xiaomi)",
+                    hint = "On the next screen scroll down and tap \u201CAllow restricted settings\u201D. Without this, Xiaomi blocks the automation toggle in the next step.",
+                    isDone = { isAccessibilityEnabled() },
+                    open = { openAppInfoSettings() },
+                ),
+            )
+        }
         return list
+    }
+
+    private fun openAppInfoSettings() {
+        try {
+            startActivity(
+                Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:$packageName"),
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        } catch (_: Exception) {
+            try {
+                startActivity(Intent(Settings.ACTION_APPLICATION_SETTINGS))
+            } catch (_: Exception) {
+            }
+        }
     }
 
     private fun isAccessibilityEnabled(): Boolean {

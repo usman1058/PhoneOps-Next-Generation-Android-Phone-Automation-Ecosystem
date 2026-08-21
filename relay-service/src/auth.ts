@@ -24,6 +24,21 @@ export function verifyDeviceWsToken(
   }
 }
 
+export function signPanelToken(): string {
+  return jwt.sign({ scope: "panel-ws" }, config.jwtSecret, {
+    expiresIn: "30m",
+  });
+}
+
+export function verifyPanelToken(token: string): boolean {
+  try {
+    const decoded = jwt.verify(token, config.jwtSecret) as jwt.JwtPayload;
+    return decoded.scope === "panel-ws";
+  } catch {
+    return false;
+  }
+}
+
 export function verifyInternalSecret(secret: string | null): boolean {
   return secret !== null && secret === config.relayInternalSecret;
 }

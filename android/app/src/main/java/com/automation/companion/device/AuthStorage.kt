@@ -25,9 +25,16 @@ class AuthStorage(context: Context) {
             prefs.edit().putString(KEY_FCM, value).apply()
         }
 
+    var setupPrompted: Boolean
+        get() = prefs.getBoolean(KEY_SETUP_PROMPTED, false)
+        set(value) {
+            prefs.edit().putBoolean(KEY_SETUP_PROMPTED, value).apply()
+        }
+
     private companion object {
         const val KEY_URL = "relayUrl"
         const val KEY_KEY = "apiKey"
         const val KEY_FCM = "fcmToken"
+        const val KEY_SETUP_PROMPTED = "setupPrompted"
     }
 }

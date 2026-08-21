@@ -68,6 +68,7 @@ class DeviceSocketService : Service() {
                     is RelayEvent.RunTask -> "Run ${event.runId.take(8)}..."
                     is RelayEvent.StartRecording -> "Recording ${event.sessionId.take(8)}..."
                     is RelayEvent.StopRecording -> "Recording stopped"
+                    RelayEvent.ScreenPermissionNeeded -> "Screen share permission needed"
                     is RelayEvent.Error -> "Error: ${event.message}"
                 }
                 updateNotification(text)

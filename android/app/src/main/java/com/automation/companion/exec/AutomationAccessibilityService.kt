@@ -1,6 +1,7 @@
 ﻿package com.automation.companion.exec
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.GestureDescription
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import com.automation.companion.CompanionApp
@@ -46,6 +47,7 @@ class AutomationAccessibilityService : AccessibilityService() {
             app.relayClient.send(msg.toString())
         }
         app.runTaskHandler = runner?.let { it::execute }
+        app.remoteInputHandler = ::handleRemoteInput
         app.recordingSessionManager.onTap = object : RecordingSessionManager.OnTapListener {
             override fun onTap(index: Int, x: Float, y: Float) {
                 ensureOverlay()
@@ -53,6 +55,77 @@ class AutomationAccessibilityService : AccessibilityService() {
             }
         }
         app.recordingSessionManager.addCountListener(countListener)
+    }
+
+    // Injects touch/gesture input requested by a panel operator watching the
+    // live screen mirror. While a recording session is active the injected
+    // gestures are captured as automation steps.
+    private fun handleRemoteInput(input: JSONObject) {
+        val kind = input.optString("kind")
+        when (kind) {
+            "tap" -> {
+                val x = input.optDouble("x")
+                val y = input.optDouble("y")
+                tapOn(x.toFloat(), y.toFloat())
+                if (app.recordingSessionManager.isRecording()) {
+                    app.recordingSessionManager.captureRemoteTap(x.toFloat(), y.toFloat())
+                }
+            }
+            "swipe" -> {
+                val fromX = input.optDouble("x").toFloat()
+                val fromY = input.optDouble("y").toFloat()
+                val toX = input.optDouble("x2").toFloat()
+                val toY = input.optDouble("y2").toFloat()
+                val durationMs = input.optLong("durationMs", 300).coerceAtLeast(1)
+                swipe(fromX, fromY, toX, toY, durationMs)
+                if (app.recordingSessionManager.isRecording()) {
+                    app.recordingSessionManager.captureRemoteSwipe(
+                        fromX,
+                        fromY,
+                        toX,
+                        toY,
+                        durationMs,
+                    )
+                }
+            }
+            "back" -> {
+                performGlobalAction(GLOBAL_ACTION_BACK)
+                if (app.recordingSessionManager.isRecording()) {
+                    app.recordingSessionManager.captureNavigation("back")
+                }
+            }
+            "home" -> {
+                performGlobalAction(GLOBAL_ACTION_HOME)
+                if (app.recordingSessionManager.isRecording()) {
+                    app.recordingSessionManager.captureNavigation("home")
+                }
+            }
+        }
+    }
+
+    private fun tapOn(x: Float, y: Float) {
+        val path = android.graphics.Path().apply { moveTo(x, y) }
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(path, 0, 60))
+            .build()
+        dispatchGesture(gesture, null, null)
+    }
+
+    private fun swipe(
+        fromX: Float,
+        fromY: Float,
+        toX: Float,
+        toY: Float,
+        durationMs: Long,
+    ) {
+        val path = android.graphics.Path().apply {
+            moveTo(fromX, fromY)
+            lineTo(toX, toY)
+        }
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(path, 0, durationMs))
+            .build()
+        dispatchGesture(gesture, null, null)
     }
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
@@ -120,6 +193,7 @@ class AutomationAccessibilityService : AccessibilityService() {
         app.recordingSessionManager.removeCountListener(countListener)
         scope?.cancel()
         app.runTaskHandler = null
+        app.remoteInputHandler = null
         super.onDestroy()
     }
 

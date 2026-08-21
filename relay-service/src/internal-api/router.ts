@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { rateLimit, isLoopback } from "@automation/shared/rate-limit";
-import { verifyInternalSecret } from "../auth";
+import { verifyInternalSecret, signPanelToken } from "../auth";
 import { startRun } from "../run";
 import { onlineDevices } from "../sockets/state";
 import { startRecording, stopRecording } from "../recordings";
@@ -104,4 +104,11 @@ internalRouter.get("/devices/:deviceId/latest-recording", (req, res) => {
     return;
   }
   res.json({ steps });
+});
+
+// Short-lived token that lets a browser open its own Socket.IO connection to
+// the /panel namespace (used by the live screen mirror) without exposing the
+// internal secret.
+internalRouter.get("/panel-token", (_req, res) => {
+  res.json({ token: signPanelToken() });
 });

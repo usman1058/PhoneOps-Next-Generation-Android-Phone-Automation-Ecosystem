@@ -3,6 +3,8 @@ import type { RelayToDevice } from "@automation/shared";
 
 const online = new Map<string, Set<WebSocket>>();
 const pendingRuns = new Map<string, string[]>();
+// deviceId -> sessionId of the active screen-mirroring session
+const screenSessions = new Map<string, string>();
 
 export function addOnline(deviceId: string, ws: WebSocket): void {
   let set = online.get(deviceId);
@@ -40,7 +42,7 @@ export function sendToDevice(deviceId: string, msg: RelayToDevice): void {
   for (const ws of sockets) {
     if (ws.readyState === ws.OPEN) {
       ws.send(data);
-      console.log(`[sendToDevice] sent to ${deviceId}`);
+      console.log(`[sendToDevice] sent to ${deviceId} (${msg.type})`);
     } else {
       console.log(`[sendToDevice] socket not OPEN (${ws.readyState}) for ${deviceId}`);
     }
@@ -57,4 +59,26 @@ export function takePendingRuns(deviceId: string): string[] {
   const arr = pendingRuns.get(deviceId) ?? [];
   pendingRuns.delete(deviceId);
   return arr;
+}
+
+export function hasScreenSession(deviceId: string): boolean {
+  return screenSessions.has(deviceId);
+}
+
+export function getScreenSession(deviceId: string): string | null {
+  return screenSessions.get(deviceId) ?? null;
+}
+
+export function isScreenSession(deviceId: string, sessionId: string): boolean {
+  return screenSessions.get(deviceId) === sessionId;
+}
+
+export function startScreenSession(deviceId: string, sessionId: string): void {
+  screenSessions.set(deviceId, sessionId);
+}
+
+export function endScreenSession(deviceId: string): string | null {
+  const sessionId = screenSessions.get(deviceId) ?? null;
+  screenSessions.delete(deviceId);
+  return sessionId;
 }

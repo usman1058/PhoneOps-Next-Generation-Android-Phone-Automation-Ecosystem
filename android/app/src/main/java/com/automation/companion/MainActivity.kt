@@ -38,6 +38,19 @@ class MainActivity : AppCompatActivity() {
     private val notifPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
+    private val screenConsentLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK && result.data != null) {
+                ProjectionHolder.consentData = result.data
+                appendLog("screen share allowed")
+                if (CompanionApp.pendingMirrorParams != null) {
+                    app.onScreenStart(CompanionApp.pendingMirrorParams!!)
+                }
+            } else {
+                appendLog("screen share declined")
+            }
+        }
+
     private val cameraPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {
@@ -64,6 +77,18 @@ override fun onCreate(savedInstanceState: Bundle?) {
         binding.enableAccessibilityButton.setOnClickListener { openAccessibilitySettings() }
         binding.recordButton.setOnClickListener { toggleRecording() }
         binding.setupButton.setOnClickListener {
+            startActivity(Intent(this, SetupActivity::class.java))
+        }
+        binding.screenShareButton.setOnClickListener { requestScreenConsent() }
+
+        // First-run nudge: if the connection is configured but automation is
+        // not enabled yet, open the guided wizard once so nothing is missed.
+        if (prefs.relayUrl.isNotBlank() &&
+            prefs.apiKey.isNotBlank() &&
+            !isAccessibilityServiceEnabled() &&
+            !prefs.setupPrompted
+        ) {
+            prefs.setupPrompted = true
             startActivity(Intent(this, SetupActivity::class.java))
         }
 
@@ -142,6 +167,11 @@ override fun onCreate(savedInstanceState: Bundle?) {
                 Toast.LENGTH_LONG,
             ).show()
         }
+    }
+
+    private fun requestScreenConsent() {
+        val manager = getSystemService(MEDIA_PROJECTION_SERVICE) as android.media.projection.MediaProjectionManager
+        screenConsentLauncher.launch(manager.createScreenCaptureIntent())
     }
 
     private fun updateAccessibilityButton() {
@@ -355,6 +385,7 @@ private fun onRelayEvent(event: RelayEvent) {
             }
             is RelayEvent.StartRecording -> appendLog("start_recording session=${event.sessionId}")
             is RelayEvent.StopRecording -> appendLog("stop_recording session=${event.sessionId}")
+            RelayEvent.ScreenPermissionNeeded -> requestScreenConsent()
             is RelayEvent.Error -> {
                 binding.statusText.text = "Error: ${event.message}"
                 binding.statusText.setTextColor(ContextCompat.getColor(this, R.color.err))

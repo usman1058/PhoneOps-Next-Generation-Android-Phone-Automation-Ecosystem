@@ -261,4 +261,45 @@ class RecordingSessionManager {
         }
         notifyCount(index)
     }
+
+    // Steps injected remotely from the live-view panel are recorded with exact
+    // screen coordinates so replay reproduces what was demonstrated.
+    fun captureRemoteTap(x: Float, y: Float) {
+        val step = JSONObject()
+            .put("action", "tap_by_coordinates")
+            .put("x", x.toInt())
+            .put("y", y.toInt())
+        val index = synchronized(lock) {
+            if (activeSessionId == null) return
+            capturedSteps.add(step)
+            tapCounter += 1
+            tapCounter
+        }
+        notifyCount(index)
+        onTap?.onTap(index, x, y)
+    }
+
+    fun captureRemoteSwipe(
+        fromX: Float,
+        fromY: Float,
+        toX: Float,
+        toY: Float,
+        durationMs: Long,
+    ) {
+        val step = JSONObject()
+            .put("action", "swipe")
+            .put("fromX", fromX.toInt())
+            .put("fromY", fromY.toInt())
+            .put("toX", toX.toInt())
+            .put("toY", toY.toInt())
+            .put("durationMs", durationMs.toInt().coerceAtLeast(50))
+        val index = synchronized(lock) {
+            if (activeSessionId == null) return
+            capturedSteps.add(step)
+            tapCounter += 1
+            tapCounter
+        }
+        notifyCount(index)
+        onTap?.onTap(index, toX, toY)
+    }
 }

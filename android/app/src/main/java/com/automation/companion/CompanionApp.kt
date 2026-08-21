@@ -1,6 +1,8 @@
 ﻿package com.automation.companion
 
 import android.app.Application
+import android.content.Intent
+import androidx.core.content.ContextCompat
 import com.automation.companion.device.AuthStorage
 import com.automation.companion.exec.RecordingSessionManager
 import com.google.firebase.FirebaseApp
@@ -9,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.json.JSONArray
+import org.json.JSONObject
 
 class CompanionApp : Application() {
 
@@ -23,10 +26,44 @@ class CompanionApp : Application() {
     @Volatile
     var onTaskRejected: ((runId: String, reason: String) -> Unit)? = null
 
+    @Volatile
+    var remoteInputHandler: ((input: JSONObject) -> Unit)? = null
+
     override fun onCreate() {
         super.onCreate()
         initFirebaseIfConfigured()
         fetchFcmToken()
+        ScreenMirrorService.ensureChannel(this)
+    }
+
+    fun onScreenStart(params: MirrorParams) {
+        pendingMirrorParams = params
+        if (!ProjectionHolder.hasConsent) {
+            // The user must accept the system cast dialog once per session.
+            // If the OS blocks a background launch, the MainActivity
+            // "Allow screen share" button is the fallback path.
+            try {
+                val intent = Intent(this, MirrorConsentActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+            } catch (e: Exception) {
+                android.util.Log.w("CompanionApp", "could not launch consent activity", e)
+            }
+            return
+        }
+        ContextCompat.startForegroundService(
+            this,
+            Intent(this, ScreenMirrorService::class.java),
+        )
+    }
+
+    fun onScreenStop() {
+        val intent = Intent(this, ScreenMirrorService::class.java)
+            .setAction(ScreenMirrorService.ACTION_STOP)
+        try {
+            startService(intent)
+        } catch (_: Exception) {
+        }
     }
 
     private fun initFirebaseIfConfigured() {
@@ -64,5 +101,10 @@ class CompanionApp : Application() {
         val prefs = AuthStorage(this)
         prefs.fcmToken = token
         relayClient.sendFcmToken(token)
+    }
+
+    companion object {
+        @Volatile
+        var pendingMirrorParams: MirrorParams? = null
     }
 }

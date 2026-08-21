@@ -44,7 +44,35 @@ export const deviceToRelaySchema = z.discriminatedUnion("type", [
     type: z.literal("fcm_token"),
     token: z.string().min(1),
   }),
+  z.object({
+    type: z.literal("screen_frame"),
+    sessionId: z.string(),
+    seq: z.number().int().nonnegative(),
+    w: z.number().int().positive(),
+    h: z.number().int().positive(),
+    data: z.string(), // base64 JPEG
+  }),
 ]);
+
+export const remoteInputSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("tap"),
+    x: z.number(),
+    y: z.number(),
+  }),
+  z.object({
+    kind: z.literal("swipe"),
+    x: z.number(),
+    y: z.number(),
+    x2: z.number(),
+    y2: z.number(),
+    durationMs: z.number().int().positive().max(10_000).default(300),
+  }),
+  z.object({ kind: z.literal("back") }),
+  z.object({ kind: z.literal("home") }),
+]);
+
+export type RemoteInput = z.infer<typeof remoteInputSchema>;
 
 export const relayToDeviceSchema = z.discriminatedUnion("type", [
   z.object({
@@ -63,6 +91,21 @@ export const relayToDeviceSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("list_apps"),
     requestId: z.string(),
+  }),
+  z.object({
+    type: z.literal("screen_start"),
+    sessionId: z.string(),
+    fps: z.number().int().min(1).max(15).default(4),
+    maxW: z.number().int().min(180).max(1440).default(540),
+    quality: z.number().int().min(20).max(90).default(45),
+  }),
+  z.object({
+    type: z.literal("screen_stop"),
+    sessionId: z.string(),
+  }),
+  z.object({
+    type: z.literal("remote_input"),
+    input: remoteInputSchema,
   }),
 ]);
 
@@ -83,6 +126,20 @@ export const relayToPanelSchema = z.discriminatedUnion("type", [
     sessionId: z.string(),
     deviceId: z.string(),
     status: z.enum(["recording", "stopped"]),
+  }),
+  z.object({
+    type: z.literal("screen_frame"),
+    deviceId: z.string(),
+    sessionId: z.string(),
+    w: z.number().int().positive(),
+    h: z.number().int().positive(),
+    data: z.string(),
+  }),
+  z.object({
+    type: z.literal("screen_state"),
+    deviceId: z.string(),
+    active: z.boolean(),
+    error: z.string().optional(),
   }),
 ]);
 

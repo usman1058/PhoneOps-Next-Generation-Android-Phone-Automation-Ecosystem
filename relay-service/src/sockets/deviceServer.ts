@@ -10,7 +10,20 @@ import {
   isDeviceOnline,
   isScreenSession,
   removeOnline,
+  sendToDevice,
 } from "./state";
+import {
+  endPcSessionsForDevice,
+  getAgentWs,
+  isPcSessionOwner,
+  listAgents,
+  startPcSession,
+} from "../agents";
+
+function sendPcList(deviceId: string | null): void {
+  if (!deviceId) return;
+  sendToDevice(deviceId, { type: "pc_agents", agents: listAgents() });
+}
 import { flushPendingRuns, handleRunComplete, handleStepResult } from "../run";
 import { appendRecordingSteps, storeLatestRecording } from "../recordings";
 import { resolveAppList } from "../apps";
@@ -114,12 +127,45 @@ export function attachDeviceServer(server: Server): void {
           where: { id: deviceId },
           data: { fcmToken: m.token },
         });
+      } else if (m.type === "pc_list") {
+        sendPcList(deviceId);
+      } else if (m.type === "pc_connect" && deviceId) {
+        const sessionId = `pcs-${Date.now().toString(36)}`;
+        if (!startPcSession(m.agentId, deviceId)) {
+          sendToDevice(deviceId, {
+            type: "pc_session",
+            agentId: m.agentId,
+            ok: false,
+            error: "PC is not connected to the relay",
+          });
+          return;
+        }
+        getAgentWs(m.agentId)?.send(
+          JSON.stringify({
+            type: "pc_start",
+            sessionId,
+            fps: 5,
+            maxW: 900,
+            quality: 45,
+          }),
+        );
+        sendToDevice(deviceId, { type: "pc_session", agentId: m.agentId, ok: true });
+      } else if (m.type === "pc_input" && deviceId) {
+        // Only the phone that started the session may inject input.
+        if (!isPcSessionOwner(m.agentId, deviceId)) return;
+        getAgentWs(m.agentId)?.send(
+          JSON.stringify({ type: "pc_inject", action: m.action }),
+        );
       }
     });
 
     ws.on("close", async () => {
       clearTimeout(authTimer);
       if (authed && deviceId) {
+        // Stop any PC viewing sessions this phone owned.
+        for (const agentId of endPcSessionsForDevice(deviceId)) {
+          getAgentWs(agentId)?.send(JSON.stringify({ type: "pc_stop" }));
+        }
         const endedSession = endScreenSession(deviceId);
         if (endedSession) {
           broadcastPanel({

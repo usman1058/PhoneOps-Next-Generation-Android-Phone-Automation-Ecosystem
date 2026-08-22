@@ -70,6 +70,10 @@
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
+        <activity
+            android:name=".PcRemoteActivity"
+            android:exported="false" />
+
         <receiver
             android:name=".BootCompletedReceiver"
             android:exported="true">

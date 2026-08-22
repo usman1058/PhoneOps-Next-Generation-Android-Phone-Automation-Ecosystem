@@ -4,6 +4,7 @@ import { config } from "./config";
 import { initSentry } from "./sentry";
 import { attachDeviceServer } from "./sockets/deviceServer";
 import { attachPanelServer } from "./sockets/panelServer";
+import { attachAgentServer } from "./sockets/agentServer";
 import { internalRouter } from "./internal-api/router";
 import { deviceAuthRouter } from "./device-auth";
 import { initScheduler } from "./scheduler";
@@ -25,6 +26,7 @@ const server = http.createServer(app);
 
 attachDeviceServer(server);
 attachPanelServer(server);
+attachAgentServer(server);
 
 server.listen(config.port, () => {
   console.log(`[relay] listening on :${config.port}`);

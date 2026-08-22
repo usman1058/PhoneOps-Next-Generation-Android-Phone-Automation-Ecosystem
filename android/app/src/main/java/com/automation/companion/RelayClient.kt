@@ -1,7 +1,9 @@
 ﻿package com.automation.companion
 
 import android.content.Intent
+import android.util.Base64
 import android.util.Log
+import com.automation.companion.device.AgentInfo
 import com.automation.companion.device.RelayEvent
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -82,6 +84,32 @@ private val scope = app.appScope
             .put("type", "fcm_token")
             .put("token", token)
         send(msg.toString())
+    }
+
+    fun requestPcList() {
+        if (!isConnected) return
+        send(JSONObject().put("type", "pc_list").toString())
+    }
+
+    fun connectPc(agentId: String) {
+        if (!isConnected || agentId.isBlank()) return
+        send(
+            JSONObject()
+                .put("type", "pc_connect")
+                .put("agentId", agentId)
+                .toString(),
+        )
+    }
+
+    fun sendPcInput(agentId: String, action: JSONObject) {
+        if (!isConnected || agentId.isBlank()) return
+        send(
+            JSONObject()
+                .put("type", "pc_input")
+                .put("agentId", agentId)
+                .put("action", action)
+                .toString(),
+        )
     }
 
     private fun queryInstalledApps(): JSONArray {
@@ -260,6 +288,35 @@ private val scope = app.appScope
                 "remote_input" -> {
                     val input = msg.optJSONObject("input") ?: return
                     app.remoteInputHandler?.invoke(input)
+                }
+                "pc_agents" -> {
+                    val arr = msg.optJSONArray("agents") ?: org.json.JSONArray()
+                    val agents = ArrayList<AgentInfo>(arr.length())
+                    for (i in 0 until arr.length()) {
+                        val a = arr.getJSONObject(i)
+                        agents.add(AgentInfo(a.optString("id"), a.optString("name")))
+                    }
+                    _events.tryEmit(RelayEvent.PcAgents(agents))
+                }
+                "pc_session" -> {
+                    _events.tryEmit(
+                        RelayEvent.PcSession(
+                            agentId = msg.getString("agentId"),
+                            ok = msg.getBoolean("ok"),
+                            error = msg.optString("error", null),
+                        ),
+                    )
+                }
+                "pc_frame" -> {
+                    val data = Base64.decode(msg.getString("data"), Base64.NO_WRAP)
+                    _events.tryEmit(
+                        RelayEvent.PcFrame(
+                            agentId = msg.getString("agentId"),
+                            w = msg.getInt("w"),
+                            h = msg.getInt("h"),
+                            data = data,
+                        ),
+                    )
                 }
             }
         } catch (e: Exception) {

@@ -70,8 +70,11 @@ class DeviceSocketService : Service() {
                     is RelayEvent.StopRecording -> "Recording stopped"
                     RelayEvent.ScreenPermissionNeeded -> "Screen share permission needed"
                     is RelayEvent.Error -> "Error: ${event.message}"
+                    else -> null
                 }
-                updateNotification(text)
+                if (text != null) {
+                    updateNotification(text)
+                }
             }
         }
 

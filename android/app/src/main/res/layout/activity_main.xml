@@ -63,6 +63,14 @@
             android:layout_marginTop="8dp"
             android:text="Allow screen share (for live view)" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/pcRemoteButton"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="PC Remote (control a computer)" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

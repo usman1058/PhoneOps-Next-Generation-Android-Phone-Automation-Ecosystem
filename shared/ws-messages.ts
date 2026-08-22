@@ -8,6 +8,62 @@ export const appInfoSchema = z.object({
 
 export type AppInfo = z.infer<typeof appInfoSchema>;
 
+// ---- PC remote (phone -> Windows agent) ------------------------------------
+
+export const pcActionSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("click"), x: z.number(), y: z.number() }),
+  z.object({
+    kind: z.literal("drag"),
+    x: z.number(),
+    y: z.number(),
+    x2: z.number(),
+    y2: z.number(),
+    durationMs: z.number().int().min(50).max(5_000).default(250),
+  }),
+  z.object({ kind: z.literal("text"), text: z.string().max(2_000) }),
+  z.object({
+    kind: z.literal("key"),
+    key: z.enum([
+      "enter",
+      "tab",
+      "esc",
+      "backspace",
+      "delete",
+      "space",
+      "up",
+      "down",
+      "left",
+      "right",
+    ]),
+  }),
+]);
+
+export type PcAction = z.infer<typeof pcActionSchema>;
+
+export const agentInfoSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
+export type AgentInfo = z.infer<typeof agentInfoSchema>;
+
+// Messages the Windows agent sends to the relay.
+export const agentToRelaySchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("hello_agent"),
+    name: z.string().min(1).max(80),
+  }),
+  z.object({
+    type: z.literal("pc_frame"),
+    sessionId: z.string(),
+    w: z.number().int().positive(),
+    h: z.number().int().positive(),
+    data: z.string(), // base64 JPEG
+  }),
+]);
+
+export type AgentToRelay = z.infer<typeof agentToRelaySchema>;
+
 export const deviceToRelaySchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("hello"),
@@ -51,6 +107,18 @@ export const deviceToRelaySchema = z.discriminatedUnion("type", [
     w: z.number().int().positive(),
     h: z.number().int().positive(),
     data: z.string(), // base64 JPEG
+  }),
+  z.object({
+    type: z.literal("pc_list"),
+  }),
+  z.object({
+    type: z.literal("pc_connect"),
+    agentId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("pc_input"),
+    agentId: z.string().min(1),
+    action: pcActionSchema,
   }),
 ]);
 
@@ -106,6 +174,23 @@ export const relayToDeviceSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("remote_input"),
     input: remoteInputSchema,
+  }),
+  z.object({
+    type: z.literal("pc_frame"),
+    agentId: z.string(),
+    w: z.number().int().positive(),
+    h: z.number().int().positive(),
+    data: z.string(),
+  }),
+  z.object({
+    type: z.literal("pc_agents"),
+    agents: z.array(agentInfoSchema),
+  }),
+  z.object({
+    type: z.literal("pc_session"),
+    agentId: z.string(),
+    ok: z.boolean(),
+    error: z.string().optional(),
   }),
 ]);
 

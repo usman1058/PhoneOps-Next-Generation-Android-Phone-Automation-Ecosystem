@@ -80,6 +80,9 @@ override fun onCreate(savedInstanceState: Bundle?) {
             startActivity(Intent(this, SetupActivity::class.java))
         }
         binding.screenShareButton.setOnClickListener { requestScreenConsent() }
+        binding.pcRemoteButton.setOnClickListener {
+            startActivity(Intent(this, PcRemoteActivity::class.java))
+        }
 
         // First-run nudge: if the connection is configured but automation is
         // not enabled yet, open the guided wizard once so nothing is missed.
@@ -386,6 +389,8 @@ private fun onRelayEvent(event: RelayEvent) {
             is RelayEvent.StartRecording -> appendLog("start_recording session=${event.sessionId}")
             is RelayEvent.StopRecording -> appendLog("stop_recording session=${event.sessionId}")
             RelayEvent.ScreenPermissionNeeded -> requestScreenConsent()
+            is RelayEvent.PcAgents, is RelayEvent.PcSession -> Unit
+            is RelayEvent.PcFrame -> Unit
             is RelayEvent.Error -> {
                 binding.statusText.text = "Error: ${event.message}"
                 binding.statusText.setTextColor(ContextCompat.getColor(this, R.color.err))

@@ -1,0 +1,14 @@
+{
+  "name": "@automation/pc-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Windows screen-share + input agent for PhoneOps phone->PC remote control",
+  "main": "agent.mjs",
+  "scripts": {
+    "start": "node agent.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
